@@ -568,6 +568,8 @@ config HOTPLUG_CPU
 
 source kernel/Kconfig.preempt
 
+source kernel/Kconfig.hz
+
 config SWP_EMULATE
 	bool "Emulate SWP/SWPB instructions"
 	help
