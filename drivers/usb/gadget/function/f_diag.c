@@ -457,6 +457,7 @@ fail:
 }
 EXPORT_SYMBOL(usb_diag_alloc_req);
 #define DWC3_MAX_REQUEST_SIZE (16 * 1024 * 1024)
+#define CI_MAX_REQUEST_SIZE   (16 * 16 * 1024)
 /**
  * usb_diag_request_size - Max request size for controller
  * @ch: Channel handler
@@ -466,7 +467,11 @@ EXPORT_SYMBOL(usb_diag_alloc_req);
  */
 int usb_diag_request_size(struct usb_diag_ch *ch)
 {
-	return DWC3_MAX_REQUEST_SIZE;
+	if (!of_machine_is_compatible("somc,kugo-row") &&
+		!of_machine_is_compatible("somc,suzu-row"))
+			return DWC3_MAX_REQUEST_SIZE;
+	else
+			return CI_MAX_REQUEST_SIZE;
 }
 EXPORT_SYMBOL(usb_diag_request_size);
 
