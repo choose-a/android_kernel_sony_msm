@@ -227,8 +227,6 @@
 
 		/delete-node/ synaptics@20;
 
-#include "clearpad-ic-default-regoffset.dtsi"
-
 		synaptics_clearpad@2c {
 			compatible = "synaptics,clearpad";
 			reg = <0x2c>;
@@ -251,7 +249,7 @@
 			preset_x_max = <1079>;
 			preset_y_max = <1919>;
 			preset_n_fingers = <10>;
-			wakeup_gesture_supported = <0>;
+			wakeup_gesture_supported = <1>;
 			wakeup_gesture_lpm_disabled = <0>;
 			wakeup_gesture_timeout = <0>;
 			wakeup_gesture {
