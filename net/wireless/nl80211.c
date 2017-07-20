@@ -1119,10 +1119,12 @@ static int nl80211_send_wowlan(struct sk_buff *msg,
 			return -ENOBUFS;
 	}
 
+#ifndef CONFIG_ARCH_SONY_TONE
 	if ((rdev->wiphy.wowlan->flags & WIPHY_WOWLAN_NET_DETECT) &&
 	    nla_put_u32(msg, NL80211_WOWLAN_TRIG_NET_DETECT,
 			rdev->wiphy.wowlan->max_nd_match_sets))
 		return -ENOBUFS;
+#endif
 
 	if (large && nl80211_send_wowlan_tcp_caps(rdev, msg))
 		return -ENOBUFS;
@@ -9366,6 +9368,7 @@ static int nl80211_send_wowlan_tcp(struct sk_buff *msg,
 	return 0;
 }
 
+#ifndef CONFIG_ARCH_SONY_TONE
 static int nl80211_send_wowlan_nd(struct sk_buff *msg,
 				  struct cfg80211_sched_scan_request *req)
 {
@@ -9443,6 +9446,7 @@ static int nl80211_send_wowlan_nd(struct sk_buff *msg,
 
 	return 0;
 }
+#endif
 
 static int nl80211_get_wowlan(struct sk_buff *skb, struct genl_info *info)
 {
@@ -9501,10 +9505,12 @@ static int nl80211_get_wowlan(struct sk_buff *skb, struct genl_info *info)
 					    rdev->wiphy.wowlan_config->tcp))
 			goto nla_put_failure;
 
+#ifndef CONFIG_ARCH_SONY_TONE
 		if (nl80211_send_wowlan_nd(
 			    msg,
 			    rdev->wiphy.wowlan_config->nd_config))
 			goto nla_put_failure;
+#endif
 
 		nla_nest_end(msg, nl_wowlan);
 	}
@@ -9662,6 +9668,7 @@ static int nl80211_parse_wowlan_tcp(struct cfg80211_registered_device *rdev,
 	return 0;
 }
 
+#ifndef CONFIG_ARCH_SONY_TONE
 static int nl80211_parse_wowlan_nd(struct cfg80211_registered_device *rdev,
 				   const struct wiphy_wowlan_support *wowlan,
 				   struct nlattr *attr,
@@ -9694,6 +9701,7 @@ out:
 	kfree(tb);
 	return err;
 }
+#endif
 
 static int nl80211_set_wowlan(struct sk_buff *skb, struct genl_info *info)
 {
@@ -9850,6 +9858,7 @@ static int nl80211_set_wowlan(struct sk_buff *skb, struct genl_info *info)
 			goto error;
 	}
 
+#ifndef CONFIG_ARCH_SONY_TONE
 	if (tb[NL80211_WOWLAN_TRIG_NET_DETECT]) {
 		regular = true;
 		err = nl80211_parse_wowlan_nd(
@@ -9858,6 +9867,7 @@ static int nl80211_set_wowlan(struct sk_buff *skb, struct genl_info *info)
 		if (err)
 			goto error;
 	}
+#endif
 
 	/* The 'any' trigger means the device continues operating more or less
 	 * as in its normal operation mode and wakes up the host on most of the
@@ -9891,7 +9901,9 @@ static int nl80211_set_wowlan(struct sk_buff *skb, struct genl_info *info)
 	if (new_triggers.tcp && new_triggers.tcp->sock)
 		sock_release(new_triggers.tcp->sock);
 	kfree(new_triggers.tcp);
+#ifndef CONFIG_ARCH_SONY_TONE
 	kfree(new_triggers.nd_config);
+#endif
 	return err;
 }
 #endif
