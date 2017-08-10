@@ -4572,6 +4572,12 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	if (msm_host->pdata->nonhotplug)
 		msm_host->mmc->caps2 |= MMC_CAP2_NONHOTPLUG;
 
+#ifdef CONFIG_WIFI_CONTROL_FUNC
+	if (msm_host->pdata->use_for_wifi) {
+		msm_host->mmc->caps2 |= MMC_CAP2_NONSTANDARD_OCR;
+		msm_host->mmc->caps2 |= MMC_CAP2_ASYNC_SDIO_IRQ_4BIT_MODE;
+	}
+#endif
 
 	/* Initialize ICE if present */
 	if (msm_host->ice.pdev) {

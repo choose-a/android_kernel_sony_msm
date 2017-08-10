@@ -293,9 +293,9 @@ struct msm_otg_platform_data {
 	int phy_init_sz;
 	int (*vbus_power)(bool on);
 	unsigned power_budget;
-	enum usb_mode_type mode;
+	enum usb_dr_mode mode;
 	enum otg_control_type otg_control;
-	enum usb_mode_type default_mode;
+	enum usb_dr_mode default_mode;
 	enum msm_usb_phy_type phy_type;
 	void (*setup_gpio)(enum usb_otg_state state);
 	int (*link_clk_reset)(struct clk *link_clk, bool assert);
@@ -329,6 +329,10 @@ struct msm_otg_platform_data {
 	bool enable_streaming;
 	bool enable_axi_prefetch;
 	bool enable_sdp_typec_current_limit;
+#ifdef CONFIG_ARCH_SONY_LOIRE
+	int *phy_init_seq_host;
+	int usb_switch_sel_gpio;
+#endif
 };
 
 /* phy related flags */
@@ -418,11 +422,11 @@ struct msm_otg {
 	struct clk *pclk;
 	struct clk *core_clk;
 	struct clk *sleep_clk;
-	struct clk *phy_reset_clk;
-	struct clk *phy_por_clk;
 	struct clk *phy_csr_clk;
 	struct clk *bus_clks[USB_NUM_BUS_CLOCKS];
 	struct clk *phy_ref_clk;
+	struct reset_control *phy_reset;
+	struct reset_control *phy_por_reset;
 	long core_clk_rate;
 	long core_clk_svs_rate;
 	long core_clk_nominal_rate;
@@ -449,7 +453,7 @@ struct msm_otg {
 	int phy_number;
 	struct workqueue_struct *otg_wq;
 	struct delayed_work chg_work;
-	struct work_struct id_status_work;
+	struct delayed_work id_status_work;
 	enum usb_chg_state chg_state;
 	enum usb_chg_type chg_type;
 	u8 dcd_retries;
@@ -526,6 +530,7 @@ struct msm_otg {
 	unsigned int bc1p2_current_max;
 	unsigned int typec_current_max;
 	unsigned int usbin_health;
+	unsigned int usb_type;
 
 	dev_t ext_chg_dev;
 	struct cdev ext_chg_cdev;
@@ -555,11 +560,17 @@ struct msm_otg {
 	struct pm_qos_request pm_qos_req_dma;
 	struct delayed_work perf_vote_work;
 
+#ifdef CONFIG_ARCH_SONY_LOIRE
+	bool usbin_state;
+#endif
+
 	/* EXTCON */
 	struct extcon_dev *ec_vbus;
 	struct extcon_dev *ec_usbid;
+	struct extcon_dev *ec_cabledet;
 	struct notifier_block vbus_notifier;
 	struct notifier_block usbid_notifier;
+	struct notifier_block cabledet_notifier;
 };
 
 struct ci13xxx_platform_data {

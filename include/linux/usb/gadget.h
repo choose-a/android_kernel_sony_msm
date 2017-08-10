@@ -752,7 +752,9 @@ struct usb_gadget {
 	unsigned			is_selfpowered:1;
 	unsigned			deactivated:1;
 	unsigned			connected:1;
+	u8				usb_core_id;
 	bool                            remote_wakeup;
+	bool				bam2bam_func_enabled;
 };
 #define work_to_gadget(w)	(container_of((w), struct usb_gadget, work))
 
@@ -783,7 +785,10 @@ static inline size_t
 usb_ep_align_maybe(struct usb_gadget *g, struct usb_ep *ep, size_t len)
 {
 	return !g->quirk_ep_out_aligned_size ? len :
-			round_up(len, (size_t)ep->desc->wMaxPacketSize);
+			max_t(size_t, 512,
++			round_up(len, (size_t)ep->desc->wMaxPacketSize));
+
+//			round_up(len, (size_t)ep->desc->wMaxPacketSize);
 }
 
 /**
@@ -845,6 +850,7 @@ static inline int gadget_is_otg(struct usb_gadget *g)
 	return g->is_otg;
 #else
 	return 0;
+//	return 1;
 #endif
 }
 
@@ -1336,6 +1342,7 @@ struct usb_gadget_driver {
 
 	/* FIXME support safe rmmod */
 	struct device_driver	driver;
+	u8			usb_core_id;
 };
 
 

@@ -1453,6 +1453,16 @@ static void sdhci_set_power(struct sdhci_host *host, unsigned char mode,
 	struct mmc_host *mmc = host->mmc;
 	u8 pwr = 0;
 
+	/*
+	 * Don't disable/re-enable power to the card when running a
+	 * suspend/resume sequence and the pm_flags are configured to preserve
+	 * card power during suspend.
+	 */
+	if (mmc_card_keep_power(mmc) &&
+	    ((mmc->dev_status == DEV_SUSPENDED && mode == MMC_POWER_UP) ||
+	     (mmc->dev_status == DEV_SUSPENDING && mode == MMC_POWER_OFF)))
+		return;
+
 	if (!IS_ERR(mmc->supply.vmmc)) {
 		spin_unlock_irq(&host->lock);
 		mmc_regulator_set_ocr(mmc, mmc->supply.vmmc, vdd);
@@ -1480,8 +1490,15 @@ static void sdhci_set_power(struct sdhci_host *host, unsigned char mode,
 			pwr = SDHCI_POWER_330;
 			break;
 		default:
-			WARN(1, "%s: Invalid vdd %#x\n",
-			     mmc_hostname(host->mmc), vdd);
+#if 0 //def CONFIG_SOMC_LOW_VOLTAGE
+			if (mmc_card_sdio(host->mmc->card)) {
+				pwr = SDHCI_POWER_180;
+			} else
+#endif
+			{
+				WARN(1, "%s: Invalid vdd %#x\n",
+				     mmc_hostname(host->mmc), vdd);
+			}
 			break;
 		}
 	}

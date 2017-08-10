@@ -1287,13 +1287,15 @@ static int configfs_composite_bind(struct usb_gadget *gadget,
 	struct usb_string		*s;
 	unsigned			i;
 	int				ret;
-
+pr_err("CONFIGFS_COMPOSITE_BIND\n");
 	/* the gi->lock is hold by the caller */
 	cdev->gadget = gadget;
 	set_gadget_data(gadget, cdev);
 	ret = composite_dev_prepare(composite, cdev);
-	if (ret)
+	if (ret) {
+		pr_err("CANNOT PREPARE COMPOSITE DEV\n");
 		return ret;
+	}
 	/* and now the gadget bind */
 	ret = -EINVAL;
 
@@ -1335,6 +1337,7 @@ static int configfs_composite_bind(struct usb_gadget *gadget,
 		s = usb_gstrings_attach(&gi->cdev, gi->gstrings,
 				USB_GADGET_FIRST_AVAIL_IDX);
 		if (IS_ERR(s)) {
+			pr_err("CANNOT ATTACH GSTRINGS\n");
 			ret = PTR_ERR(s);
 			goto err_comp_cleanup;
 		}
@@ -1355,6 +1358,7 @@ static int configfs_composite_bind(struct usb_gadget *gadget,
 
 		usb_desc = usb_otg_descriptor_alloc(gadget);
 		if (!usb_desc) {
+			pr_err("CANNOT ALLOCATE DESCRIPTOR!!!\n");
 			ret = -ENOMEM;
 			goto err_comp_cleanup;
 		}
@@ -1385,6 +1389,7 @@ static int configfs_composite_bind(struct usb_gadget *gadget,
 			cfg->gstrings[i] = NULL;
 			s = usb_gstrings_attach(&gi->cdev, cfg->gstrings, 1);
 			if (IS_ERR(s)) {
+				pr_err("CANNOT ATTACH GSTRINGS IN ATTACH ALL\n");
 				ret = PTR_ERR(s);
 				goto err_comp_cleanup;
 			}
@@ -1395,25 +1400,31 @@ static int configfs_composite_bind(struct usb_gadget *gadget,
 			list_del(&f->list);
 			ret = usb_add_function(c, f);
 			if (ret) {
+				pr_err("CANNOT ADD USB FUNCTION %s FOR CONFIGURATION %s\n", f->name, c->label);
 				list_add(&f->list, &cfg->func_list);
 				goto err_purge_funcs;
 			}
+			pr_err("Added function %s for configuration %s\n", f->name, c->label);
 		}
 		usb_ep_autoconfig_reset(cdev->gadget);
 	}
 	if (cdev->use_os_string) {
 		ret = composite_os_desc_req_prepare(cdev, gadget->ep0);
-		if (ret)
+		if (ret) {
+			pr_err("CANNOT PREPARE OS DESC\n");
 			goto err_purge_funcs;
+		}
 	}
 
 	usb_ep_autoconfig_reset(cdev->gadget);
+			pr_err("CONFIGFS BIND SUCCESS\n");
 	return 0;
 
 err_purge_funcs:
 	purge_configs_funcs(gi);
 err_comp_cleanup:
 	composite_dev_cleanup(cdev);
+	pr_err("CONFIGFS FAILURE RETURNS %d", ret);
 	return ret;
 }
 
@@ -1446,26 +1457,26 @@ static void android_work(struct work_struct *data)
 	if (status[0]) {
 		kobject_uevent_env(&android_device->kobj,
 					KOBJ_CHANGE, connected);
-		pr_info("%s: sent uevent %s\n", __func__, connected[0]);
+		pr_err("%s: sent uevent %s\n", __func__, connected[0]);
 		uevent_sent = true;
 	}
 
 	if (status[1]) {
 		kobject_uevent_env(&android_device->kobj,
 					KOBJ_CHANGE, configured);
-		pr_info("%s: sent uevent %s\n", __func__, configured[0]);
+		pr_err("%s: sent uevent %s\n", __func__, configured[0]);
 		uevent_sent = true;
 	}
 
 	if (status[2]) {
 		kobject_uevent_env(&android_device->kobj,
 					KOBJ_CHANGE, disconnected);
-		pr_info("%s: sent uevent %s\n", __func__, disconnected[0]);
+		pr_err("%s: sent uevent %s\n", __func__, disconnected[0]);
 		uevent_sent = true;
 	}
 
 	if (!uevent_sent) {
-		pr_info("%s: did not send uevent (%d %d %pK)\n", __func__,
+		pr_err("%s: did not send uevent (%d %d %pK)\n", __func__,
 			gi->connected, gi->sw_connected, cdev->config);
 	}
 }
@@ -1499,6 +1510,9 @@ static int android_setup(struct usb_gadget *gadget,
 	struct gadget_info *gi = container_of(cdev, struct gadget_info, cdev);
 	int value = -EOPNOTSUPP;
 	struct usb_function_instance *fi;
+	int num_of_entries = 0;
+
+pr_err("=======ANDROID_SETUP=======\n");
 
 	spin_lock_irqsave(&cdev->lock, flags);
 	if (!gi->connected) {
@@ -1507,12 +1521,24 @@ static int android_setup(struct usb_gadget *gadget,
 	}
 	spin_unlock_irqrestore(&cdev->lock, flags);
 	list_for_each_entry(fi, &gi->available_func, cfs_list) {
+		num_of_entries++;
+
+		if (fi == NULL)
+			pr_err("fi is null wtf\n");
+		else if (fi->f == NULL)
+			pr_err("no fi function wtf\n");
+		else if (fi->f->setup == NULL)
+			pr_err("no fi function setup!??!?!\n");
+
 		if (fi != NULL && fi->f != NULL && fi->f->setup != NULL) {
+			pr_err("android_setup: setting up %s", fi->f->name);
 			value = fi->f->setup(fi->f, c);
 			if (value >= 0)
 				break;
 		}
 	}
+
+	pr_err("android_setup: found %d entries\n", num_of_entries);
 
 #ifdef CONFIG_USB_CONFIGFS_F_ACC
 	if (value < 0)
@@ -1528,6 +1554,8 @@ static int android_setup(struct usb_gadget *gadget,
 		schedule_work(&gi->work);
 	}
 	spin_unlock_irqrestore(&cdev->lock, flags);
+
+	pr_err("android_setup returning %d", value);
 
 	return value;
 }
@@ -1570,9 +1598,10 @@ static const struct usb_gadget_driver configfs_driver_template = {
 	.reset          = composite_disconnect,
 	.disconnect     = composite_disconnect,
 #endif
+/*
 	.suspend	= composite_suspend,
 	.resume		= composite_resume,
-
+*/
 	.max_speed	= USB_SPEED_SUPER,
 	.driver = {
 		.owner          = THIS_MODULE,
@@ -1669,6 +1698,7 @@ static struct config_group *gadgets_make(
 {
 	struct gadget_info *gi;
 
+pr_err("GADGETS_MAKE\n");
 	gi = kzalloc(sizeof(*gi), GFP_KERNEL);
 	if (!gi)
 		return ERR_PTR(-ENOMEM);
@@ -1707,11 +1737,16 @@ static struct config_group *gadgets_make(
 	gi->composite.gadget_driver.function = kstrdup(name, GFP_KERNEL);
 	gi->composite.name = gi->composite.gadget_driver.function;
 
-	if (!gi->composite.gadget_driver.function)
+	if (!gi->composite.gadget_driver.function) {
+		pr_err("=======NO GADGET DRIVER FUNCTION WTF??=====\n");
 		goto err;
+	}
 
-	if (android_device_create(gi) < 0)
+	if (android_device_create(gi) < 0) {
+		pr_err("=========CANNOT CREATE ANDROID DEVICE=========\n");
 		goto err;
+	} else
+		pr_err("=====ANDROID DEVICE CREATED=====\n");
 
 	config_group_init_type_name(&gi->group, name,
 				&gadget_root_type);
