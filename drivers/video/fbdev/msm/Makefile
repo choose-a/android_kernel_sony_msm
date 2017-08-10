@@ -1,3 +1,6 @@
+ifeq ($(CONFIG_FB_MSM_MDSS_COMMON),y)
+obj-y += ../../msm/
+else
 ccflags-y += -I$(src) -Idrivers/staging/android
 
 obj-$(CONFIG_FB_MSM_MDSS_MHL3) += mhl3/
@@ -71,4 +74,5 @@ obj-$(CONFIG_FB_MSM_MDSS) += mdss_fb.o mdss_util.o
 
 ifeq ($(CONFIG_FB_MSM_MDSS),y)
     obj-$(CONFIG_COMPAT) += mdss_compat_utils.o
+endif
 endif

@@ -22,6 +22,7 @@
 #include <linux/irqreturn.h>
 #include <linux/irqdomain.h>
 #include <linux/mdss_io_util.h>
+#include <linux/msm_iommu_domains.h>
 #include <linux/mdss_smmu_ext.h>
 
 #include <linux/msm-bus.h>
@@ -69,6 +70,17 @@ enum mdss_bus_vote_type {
 struct mdss_hw_settings {
 	char __iomem *reg;
 	u32 val;
+};
+
+struct mdss_iommu_map_type {
+	char *client_name;
+	char *ctx_name;
+	struct device *ctx;
+	struct msm_iova_partition partitions[1];
+	int npartitions;
+	int domain_idx;
+	unsigned long start;
+	unsigned long size;
 };
 
 struct mdss_max_bw_settings {
@@ -220,6 +232,12 @@ enum mdss_mdp_intf_index {
 	MDSS_MDP_INTF2,
 	MDSS_MDP_INTF3,
 	MDSS_MDP_MAX_INTF
+};
+
+enum mdss_smmu_version {
+	MDSS_SMMU_V1,
+	MDSS_SMMU_V2,
+	MDSS_SMMU_ARM
 };
 
 struct reg_bus_client {
@@ -491,6 +509,7 @@ struct mdss_data_type {
 
 	struct ion_client *iclient;
 	int iommu_attached;
+	struct mdss_iommu_map_type *iommu_map;
 
 	u32 dbg_bus_flags;
 	struct debug_bus *dbg_bus;
