@@ -47,7 +47,7 @@
 #define SCM_EDLOAD_MODE			0X01
 #define SCM_DLOAD_CMD			0x10
 
-#if defined(CONFIG_ARCH_SONY_LOIRE) || defined(CONFIG_ARCH_SONY_TONE)
+#if defined(CONFIG_ARCH_SONY_KANUTI) || defined(CONFIG_ARCH_SONY_LOIRE) || defined(CONFIG_ARCH_SONY_TONE)
  #define TARGET_SOMC_S1BOOT
 #endif
 #if defined(CONFIG_ARCH_SONY_YOSHINO)
@@ -379,12 +379,9 @@ static void msm_restart_prepare(const char *cmd)
 		}
 	} else {
 		pr_notice("%s : cmd is NULL, set to reboot mode\n", __func__);
-#ifdef TARGET_SOMC_XBOOT
+#if defined(TARGET_SOMC_XBOOT) || defined(TARGET_SOMC_S1BOOT)
 		qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
 		__raw_writel(0x77665501, restart_reason);
-#elif defined(TARGET_SOMC_S1BOOT)
-		qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
-		__raw_writel(0x776655AA, restart_reason);
 #else
 		qpnp_pon_set_restart_reason(PON_RESTART_REASON_REBOOT);
 		__raw_writel(0x776655AA, restart_reason);
@@ -440,6 +437,7 @@ static void do_msm_restart(enum reboot_mode reboot_mode, const char *cmd)
 		msm_trigger_wdog_bite();
 #endif
 
+	scm_disable_sdi();
 	halt_spmi_pmic_arbiter();
 	deassert_ps_hold();
 
@@ -678,6 +676,8 @@ skip_sysfs_create:
 	set_dload_mode(download_mode);
 	if (!download_mode)
 		scm_disable_sdi();
+#else
+	scm_disable_sdi();
 #endif
 
 #ifdef TARGET_SOMC_XBOOT
