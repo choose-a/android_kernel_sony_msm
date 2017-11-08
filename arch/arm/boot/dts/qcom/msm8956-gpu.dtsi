@@ -60,6 +60,10 @@
 		qcom,pm-qos-active-latency = <401>;
 		qcom,pm-qos-wakeup-latency = <101>;
 
+		/* Quirks */
+		qcom,gpu-quirk-dp2clockgating-disable;
+		qcom,gpu-quirk-lmloadkill-disable;
+
 		/* Avoid L2PC on big cluster CPUs (CPU 4,5,6,7) */
 		qcom,l2pc-cpu-mask = <0x000000F0>;
 
@@ -117,6 +121,35 @@
 		coresight-outports = <0>;
 		coresight-child-list = <&funnel_in0>;
 		coresight-child-ports = <4>;
+
+		/* Enable context aware freq. scaling */
+		qcom,enable-ca-jump;
+
+		/* Context aware jump busy penalty in us */
+		qcom,ca-busy-penalty = <12000>;
+
+		/* Context aware jump target power level */
+		qcom,ca-target-pwrlevel = <5>;
+
+		/* GPU Mempools */
+		qcom,gpu-mempools {
+			#address-cells= <1>;
+			#size-cells = <0>;
+			compatible = "qcom,gpu-mempools";
+
+			qcom,mempool-max-pages = <32768>;
+
+			/* 4K Page Pool configuration */
+			qcom,gpu-mempool@0 {
+				reg = <0>;
+				qcom,mempool-page-size = <4096>;
+			};
+			/* 64K Page Pool configuration */
+			qcom,gpu-mempool@1 {
+				reg = <1>;
+				qcom,mempool-page-size  = <65536>;
+			};
+		};
 
 		/* Power levels */
 		qcom,gpu-pwrlevels {

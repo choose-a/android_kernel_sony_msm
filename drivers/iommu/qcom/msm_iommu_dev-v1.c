@@ -19,6 +19,7 @@
 #include <linux/clk.h>
 #include <linux/iommu.h>
 #include <linux/interrupt.h>
+#include <linux/msm-bus.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/of.h>
@@ -101,11 +102,31 @@ static int msm_iommu_parse_bfb_settings(struct platform_device *pdev,
 static int __get_bus_vote_client(struct platform_device *pdev,
 				 struct msm_iommu_drvdata *drvdata)
 {
-	return 0;
+	int ret = 0;
+	struct msm_bus_scale_pdata *bs_table;
+	const char *dummy;
+
+	/* Check whether bus scaling has been specified for this node */
+	ret = of_property_read_string(pdev->dev.of_node, "qcom,msm-bus,name",
+				      &dummy);
+	if (ret)
+		return 0;
+
+	bs_table = msm_bus_cl_get_pdata(pdev);
+
+	if (bs_table) {
+		drvdata->bus_client = msm_bus_scale_register_client(bs_table);
+		if (IS_ERR(&drvdata->bus_client)) {
+			pr_err("%s(): Bus client register failed.\n", __func__);
+			ret = -EINVAL;
+		}
+	}
+	return ret;
 }
 
 static void __put_bus_vote_client(struct msm_iommu_drvdata *drvdata)
 {
+	msm_bus_scale_unregister_client(drvdata->bus_client);
 	drvdata->bus_client = 0;
 }
 
@@ -434,9 +455,19 @@ static int msm_iommu_probe(struct platform_device *pdev)
 	if (IS_ERR(drvdata->iface))
 		return PTR_ERR(drvdata->iface);
 
+	ret = clk_prepare(drvdata->iface);
+	if (ret)
+		return ret;
+
 	drvdata->core = devm_clk_get(dev, "core_clk");
-	if (IS_ERR(drvdata->core))
+	if (IS_ERR(drvdata->core)) {
+		clk_unprepare(drvdata->iface);
 		return PTR_ERR(drvdata->core);
+	}
+
+	ret = clk_prepare(drvdata->core);
+	if (ret)
+		return ret;
 
 	if (!of_property_read_u32(np, "qcom,cb-base-offset", &temp))
 		drvdata->cb_base = drvdata->base + temp;
@@ -556,6 +587,8 @@ static int msm_iommu_remove(struct platform_device *pdev)
 		idr_destroy(&drv->asid_idr);
 		__disable_clocks(drv);
 		__put_bus_vote_client(drv);
+		clk_unprepare(drv->iface);
+		clk_unprepare(drv->core);
 		msm_iommu_remove_drv(drv);
 		platform_set_drvdata(pdev, NULL);
 	}

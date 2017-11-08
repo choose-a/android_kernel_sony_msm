@@ -318,7 +318,7 @@
 		other_ext_mem: other_ext_region@85e00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x85e00000 0x0 0x0a00000>;
+			reg = <0x0 0x85b00000 0x0 0x0d00000>;
 			label = "other_ext_mem";
 		};
 
@@ -332,7 +332,7 @@
 		reloc_mem: reloc_region@8c200000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x8c200000 0x0 0x1700000>;
+			reg = <0x0 0x8c200000 0x0 0x1800000>;
 			label = "reloc_mem";
 		};
 
@@ -347,13 +347,15 @@
 		secure_mem: secure_region {
 			compatible = "shared-dma-pool";
 			reusable;
+			alloc-ranges = <0 0x00000000 0 0xffffffff>;
 			alignment = <0 0x400000>;
-			size = <0 0x7C00000>;
+			size = <0 0x9800000>;
 		};
 
 		qseecom_mem: qseecom_region {
 			compatible = "shared-dma-pool";
 			reusable;
+			alloc-ranges = <0 0x00000000 0 0xffffffff>;
 			alignment = <0 0x400000>;
 			size = <0 0x1000000>;
 		};
@@ -361,9 +363,9 @@
 		audio_mem: audio_region {
 			compatible = "shared-dma-pool";
 			reusable;
-			//reg = <0x0 0x0 0x0 0x314000>;
-			alignment = <0 0x400000>;
-			size = <0 0x400000>;
+			alloc-ranges = <0 0x00000000 0 0xffffffff>;
+			alignment = <0 0x1000>;
+			size = <0 0x800000>;
 		};
 
 		cont_splash_mem: splash_region@83000000 {
@@ -373,7 +375,9 @@
 		adsp_mem: adsp_region {
 			compatible = "shared-dma-pool";
 			reusable;
-			size = <0 0x400000>;
+			alloc-ranges = <0 0x00000000 0 0xffffffff>;
+			alignment = <0 0x100000>;
+			size = <0 0x800000>;
 		};
 
 		/* global autoconfigured region for contiguous allocations */
@@ -382,7 +386,7 @@
 			alloc-ranges = <0 0x00000000 0 0xffffffff>;
 			reusable;
 			alignment = <0 0x400000>;
-			size = <0 0x2000000>;
+			size = <0 0x4000000>; /* 64MB */
 			linux,cma-default;
 		};
 	};
@@ -981,88 +985,88 @@
 		sensor_information0: qcom,sensor-information-0 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor0";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information1: qcom,sensor-information-1 {
 			qcom,sensor-type =  "tsens";
 			qcom,sensor-name = "tsens_tz_sensor1";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information2: qcom,sensor-information-2 {
 			qcom,sensor-type =  "tsens";
 			qcom,sensor-name = "tsens_tz_sensor2";
 			qcom,alias-name = "pop_mem";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information3: qcom,sensor-information-3 {
 			qcom,sensor-type =  "tsens";
 			qcom,sensor-name = "tsens_tz_sensor3";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information4: qcom,sensor-information-4 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor4";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information5: qcom,sensor-information-5 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor5";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information6: qcom,sensor-information-6 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor6";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information7: qcom,sensor-information-7 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor7";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information8: qcom,sensor-information-8 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor8";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 			qcom,alias-name = "L2_cache_1";
 		};
 
 		sensor_information9: qcom,sensor-information-9 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor9";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information10: qcom,sensor-information-10 {
 			qcom,sensor-type = "tsens";
 			qcom,sensor-name = "tsens_tz_sensor10";
 			qcom,alias-name = "gpu";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information11: qcom,sensor-information-11 {
 			qcom,sensor-type = "adc";
 			qcom,sensor-name = "pa_therm0";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information12: qcom,sensor-information-12 {
 			qcom,sensor-type = "adc";
 			qcom,sensor-name = "pa_therm1";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information13: qcom,sensor-information-13 {
 			qcom,sensor-type = "adc";
 			qcom,sensor-name = "xo_therm";
-			qcom,scaling-factor = <10>;
+			qcom,scaling-factor = <1>;
 		};
 
 		sensor_information14: qcom,sensor-information-14 {
@@ -1240,35 +1244,35 @@
 		qcom,high-hyst-temp = <5>;
 
 		ea0: ea0 {
-			sensor = <&sensor_information1>;
+			sensor = <&sensor_information9>;
 		};
 
 		ea1: ea1 {
-			sensor = <&sensor_information1>;
+			sensor = <&sensor_information9>;
 		};
 
 		ea2: ea2 {
-			sensor = <&sensor_information1>;
+			sensor = <&sensor_information9>;
 		};
 
 		ea3: ea3 {
-			sensor = <&sensor_information1>;
+			sensor = <&sensor_information9>;
 		};
 
 		ea4: ea4 {
-			sensor = <&sensor_information3>;
-		};
-
-		ea5: ea5 {
 			sensor = <&sensor_information4>;
 		};
 
-		ea6: ea6 {
+		ea5: ea5 {
 			sensor = <&sensor_information5>;
 		};
 
-		ea7: ea7 {
+		ea6: ea6 {
 			sensor = <&sensor_information6>;
+		};
+
+		ea7: ea7 {
+			sensor = <&sensor_information7>;
 		};
 	};
 
@@ -1821,33 +1825,34 @@
 		};
 	};
 
-        ipa_hw: qcom,ipa@07900000 {
-                compatible = "qcom,ipa";
-                reg = <0x07900000 0x4effc>, <0x07904000 0x26934>;
-                reg-names = "ipa-base", "bam-base";
-                interrupts = <0 228 0>,
-                             <0 230 0>;
-                interrupt-names = "ipa-irq", "bam-irq";
-                qcom,ipa-hw-ver = <6>; /* IPA core version = IPAv2.6L */
-                qcom,ipa-hw-mode = <0>; /* IPA hw type = Normal */
-                clock-names = "core_clk";
-                clocks = <&clock_gcc clk_ipa_clk>;
-                qcom,ee = <0>;
-                qcom,msm-bus,name = "ipa";
-                qcom,msm-bus,num-cases = <3>;
-                qcom,msm-bus,num-paths = <1>;
-                qcom,msm-bus,vectors-KBps =
-                <90 512 0 0>,              /* No vote (ab=0 Mbps, ib=0 Mbps ~V NO BIMC vote) */
-                <90 512 100000 800000>,    /* SVS  - (ab=100Mbps, ib=800Mbps ~V 50MHz BIMC freq) */
-                <90 512 100000 1200000>;   /* PERF - (ab=100Mbps, ib=1200Mbps ~V 75MHz BIMC freq) */
-                qcom,bus-vector-names = "MIN", "SVS", "PERF";
-        };
+	ipa_hw: qcom,ipa@07900000 {
+		compatible = "qcom,ipa";
+		reg = <0x07900000 0x4effc>, <0x07904000 0x26934>;
+		reg-names = "ipa-base", "bam-base";
+		interrupts = <0 228 0>, <0 230 0>;
+		interrupt-names = "ipa-irq", "bam-irq";
+		qcom,ipa-hw-ver = <6>; /* IPA core version = IPAv2.6L */
+		qcom,ipa-hw-mode = <0>; /* IPA hw type = Normal */
+		qcom,wan-rx-ring-size = <192>; /* IPA WAN-rx-ring-size*/
+		qcom,lan-rx-ring-size = <192>; /* IPA LAN-rx-ring-size*/
+		clock-names = "core_clk";
+		clocks = <&clock_gcc clk_ipa_clk>;
+		qcom,ee = <0>;
+		qcom,msm-bus,name = "ipa";
+		qcom,msm-bus,num-cases = <3>;
+		qcom,msm-bus,num-paths = <1>;
+		qcom,msm-bus,vectors-KBps =
+		<90 512 0 0>,              /* No vote (ab=0 Mbps, ib=0 Mbps ~V NO BIMC vote) */
+		<90 512 100000 800000>,    /* SVS  - (ab=100Mbps, ib=800Mbps ~V 50MHz BIMC freq) */
+		<90 512 100000 1200000>;   /* PERF - (ab=100Mbps, ib=1200Mbps ~V 75MHz BIMC freq) */
+		qcom,bus-vector-names = "MIN", "SVS", "PERF";
+	};
 
-        qcom,rmnet-ipa {
-                compatible = "qcom,rmnet-ipa";
-                qcom,rmnet-ipa-ssr;
-                qcom,ipa-loaduC;
-        };
+	qcom,rmnet-ipa {
+		compatible = "qcom,rmnet-ipa";
+		qcom,rmnet-ipa-ssr;
+		qcom,ipa-loaduC;
+	};
 
 	qcom,ipc-spinlock@1905000 {
 		compatible = "qcom,ipc-spinlock-sfpb";
@@ -2298,6 +2303,7 @@
 		qcom,allowed-clock-rates = <466000000 400000000 360000000
 					    228570000 133330000 100000000
 					    80000000 72727200>;
+		qcom,slave-side-cp;
 		qcom,sw-power-collapse;
 		qcom,reset-clock-control;
 		qcom,regulator-scaling;
@@ -2378,7 +2384,7 @@
 			label = "venus-ddr";
 			qcom,bus-master = <MSM_BUS_MASTER_VIDEO_P0>;
 			qcom,bus-slave = <MSM_BUS_SLAVE_EBI_CH0>;
-			qcom,bus-governor = "msm-vidc-ddr";
+			qcom,bus-governor = "venus-ddr-gov";
 			qcom,bus-range-kbps = <1000 1205248>;
 		};
 
@@ -2526,7 +2532,7 @@
 			compatible = "qcom,msm-vidc,context-bank";
 			label = "venus_sec_non_pixel";
 			iommus = <&apps_smmu 5>;
-			buffer-types = <0x380>;
+			buffer-types = <0x480>;
 			virtual-addr-pool = <0x1000000 0x24800000>;
 			qcom,secure-context-bank;
 		};
@@ -3187,9 +3193,13 @@
 		qcom,fastrpc-smd;
 
 		qcom,msm_fastrpc_compute_cb1 {
-			compatible = "qcom,msm-fastrpc-compute-cb";
+			compatible = "qcom,msm-fastrpc-fixedsids-compute-cb";
 			label = "adsprpc-smd";
 			iommus = <&apps_smmu 16>;
+
+			qcom,virtual-addr-pool = <0x80000000 0x7FFFFFFF>;
+			qcom,adsp-shared-sids =
+					<0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf>;
 		};
 	};
 
@@ -3249,6 +3259,8 @@
 	clock-names = "core_clk", "bus_clk";
 	clocks = <&clock_gcc clk_gcc_mdss_mdp_clk>,
 		 <&clock_gcc clk_gcc_mdss_axi_clk>;
+	proxy-supply = <&gdsc_mdss>;
+	qcom,proxy-consumer-enable;
 	status = "okay";
 };
 

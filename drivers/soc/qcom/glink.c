@@ -2050,7 +2050,7 @@ static struct glink_core_xprt_ctx *find_open_transport(const char *edge,
 						       uint16_t *best_id)
 {
 	struct glink_core_xprt_ctx *xprt;
-	struct glink_core_xprt_ctx *best_xprt;
+	struct glink_core_xprt_ctx *best_xprt = NULL;
 	struct glink_core_xprt_ctx *ret;
 	bool first = true;
 
@@ -2382,6 +2382,35 @@ static int dummy_tx_cmd_ch_close(struct glink_transport_if *if_ptr,
  */
 static void dummy_tx_cmd_ch_remote_close_ack(struct glink_transport_if *if_ptr,
 				       uint32_t rcid)
+{
+	/* intentionally left blank */
+}
+
+/**
+ * dummy_tx_cmd_ch_open() - dummy channel open cmd sending function
+ * @if_ptr:	The transport to transmit on.
+ * @lcid:	The local channel id to encode.
+ * @name:	The channel name to encode.
+ * @req_xprt:	The transport the core would like to migrate this channel to.
+ *
+ * Return: 0 on success or standard Linux error code.
+ */
+static int dummy_tx_cmd_ch_open(struct glink_transport_if *if_ptr,
+			uint32_t lcid, const char *name,
+			uint16_t req_xprt)
+{
+	return -EOPNOTSUPP;
+}
+
+/**
+ * dummy_tx_cmd_ch_remote_open_ack() - convert a channel open ack cmd to wire
+ *				format and transmit
+ * @if_ptr:	The transport to transmit on.
+ * @rcid:	The remote channel id to encode.
+ * @xprt_resp:	The response to a transport migration request.
+ */
+static void dummy_tx_cmd_ch_remote_open_ack(struct glink_transport_if *if_ptr,
+					uint32_t rcid, uint16_t xprt_resp)
 {
 	/* intentionally left blank */
 }
@@ -4061,6 +4090,7 @@ static void glink_core_link_down(struct glink_transport_if *if_ptr)
 	rwref_write_get(&xprt_ptr->xprt_state_lhb0);
 	xprt_ptr->next_lcid = 1;
 	xprt_ptr->local_state = GLINK_XPRT_DOWN;
+	xprt_ptr->curr_qos_rate_kBps = 0;
 	xprt_ptr->local_version_idx = xprt_ptr->versions_entries - 1;
 	xprt_ptr->remote_version_idx = xprt_ptr->versions_entries - 1;
 	xprt_ptr->l_features =
@@ -4118,8 +4148,14 @@ static struct glink_core_xprt_ctx *glink_create_dummy_xprt_ctx(
 	if_ptr->tx_cmd_remote_rx_intent_req_ack =
 				dummy_tx_cmd_remote_rx_intent_req_ack;
 	if_ptr->tx_cmd_set_sigs = dummy_tx_cmd_set_sigs;
+	if_ptr->tx_cmd_ch_open = dummy_tx_cmd_ch_open;
+	if_ptr->tx_cmd_ch_remote_open_ack = dummy_tx_cmd_ch_remote_open_ack;
 	if_ptr->tx_cmd_ch_close = dummy_tx_cmd_ch_close;
 	if_ptr->tx_cmd_ch_remote_close_ack = dummy_tx_cmd_ch_remote_close_ack;
+	if_ptr->tx_cmd_tracer_pkt = dummy_tx_cmd_tracer_pkt;
+	if_ptr->get_power_vote_ramp_time = dummy_get_power_vote_ramp_time;
+	if_ptr->power_vote = dummy_power_vote;
+	if_ptr->power_unvote = dummy_power_unvote;
 
 	xprt_ptr->ops = if_ptr;
 	xprt_ptr->log_ctx = log_ctx;
@@ -5509,7 +5545,7 @@ static void tx_func(struct kthread_work *work)
 {
 	struct channel_ctx *ch_ptr;
 	uint32_t prio;
-	uint32_t tx_ready_head_prio;
+	uint32_t tx_ready_head_prio = 0;
 	int ret;
 	struct channel_ctx *tx_ready_head = NULL;
 	bool transmitted_successfully = true;

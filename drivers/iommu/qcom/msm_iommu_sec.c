@@ -27,10 +27,14 @@
 #include <linux/of_device.h>
 #include <linux/kmemleak.h>
 #include <linux/dma-mapping.h>
+#include <linux/dma-iommu.h>
 #include <soc/qcom/scm.h>
 
 #include <asm/cacheflush.h>
 #include <asm/sizes.h>
+
+#include <soc/qcom/secure_buffer.h>
+
 
 #include "msm_iommu_perfmon.h"
 #include "msm_iommu_hw-v1.h"
@@ -68,7 +72,7 @@ static const struct of_device_id msm_smmu_list[] = {
 };
 
 struct msm_scm_paddr_list {
-	unsigned int list;
+	phys_addr_t list;
 	unsigned int list_size;
 	unsigned int size;
 };
@@ -109,6 +113,8 @@ struct msm_scm_fault_regs_dump {
 	uint32_t dump_size;
 	uint32_t dump_data[SEC_DUMP_SIZE];
 } __aligned(PAGE_SIZE);
+
+static DEFINE_SPINLOCK(msm_iommu_sec_spin_lock);
 
 void msm_iommu_sec_set_access_ops(struct iommu_access_ops *access_ops)
 {
@@ -361,11 +367,7 @@ static int msm_iommu_sec_map2(struct msm_scm_map2_req *map)
 	u32 resp, flags;
 	int ret;
 
-#ifdef CONFIG_MSM_IOMMU_TLBINVAL_ON_MAP
-	flags = IOMMU_TLBINVAL_FLAG;
-#else
 	flags = 0;
-#endif
 
 	desc.args[0] = map->plist.list;
 	desc.args[1] = map->plist.list_size;
@@ -385,8 +387,11 @@ static int msm_iommu_sec_map2(struct msm_scm_map2_req *map)
 				IOMMU_SECURE_MAP2_FLAT), &desc);
 		resp = desc.ret[0];
 	}
-	if (ret || resp)
+	if (ret || resp) {
+		pr_debug("%s: SCM call failure. Response: 0x%x",
+			__func__, resp);
 		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -400,8 +405,11 @@ static int msm_iommu_sec_ptbl_map(struct msm_iommu_drvdata *iommu_drvdata,
 	int ret = 0;
 
 	if (!IS_ALIGNED(va, SZ_1M) || !IS_ALIGNED(len, SZ_1M) ||
-		!IS_ALIGNED(pa, SZ_1M))
+		!IS_ALIGNED(pa, SZ_1M)) {
+		pr_debug("%s: ERROR: Unaligned secure mapping requested.\n",
+			__func__);
 		return -EINVAL;
+	}
 	map.plist.list = virt_to_phys(&pa);
 	map.plist.list_size = 1;
 	map.plist.size = len;
@@ -427,7 +435,7 @@ static int msm_iommu_sec_ptbl_map(struct msm_iommu_drvdata *iommu_drvdata,
 	return 0;
 }
 
-#if 0
+#if 1
 static unsigned int get_phys_addr(struct scatterlist *sg)
 {
 	/*
@@ -601,6 +609,9 @@ static int msm_iommu_attach_dev(struct iommu_domain *domain, struct device *dev)
 		goto fail;
 	}
 
+	if (!(priv->client_name))
+		priv->client_name = dev_name(dev);
+
 	iommu_drvdata = dev_get_drvdata(dev->parent);
 	ctx_drvdata = dev_get_drvdata(dev);
 	if (!iommu_drvdata || !ctx_drvdata) {
@@ -714,6 +725,38 @@ fail:
 	return ret;
 }
 
+static size_t msm_iommu_map_sg(struct iommu_domain *domain, unsigned long iova,
+			       struct scatterlist *sg, unsigned int nents,
+			       int prot)
+{
+	struct msm_iommu_drvdata *iommu_drvdata;
+	struct msm_iommu_ctx_drvdata *ctx_drvdata;
+	struct scatterlist *tmp;
+	unsigned int len = 0;
+	int ret, i;
+	unsigned long flags;
+
+	spin_lock_irqsave(&msm_iommu_sec_spin_lock, flags);
+
+	ret = get_drvdata(domain, &iommu_drvdata, &ctx_drvdata);
+	if (ret)
+		goto fail;
+
+	for_each_sg(sg, tmp, nents, i)
+		len += tmp->length;
+
+	ret = msm_iommu_sec_ptbl_map_range(iommu_drvdata, ctx_drvdata,
+						iova, sg, len);
+	if (ret < 0)
+		goto fail;
+
+	ret = len;
+
+fail:
+	spin_unlock_irqrestore(&msm_iommu_sec_spin_lock, flags);
+	return ret;
+}
+
 static size_t msm_iommu_unmap(struct iommu_domain *domain, unsigned long va,
 			    size_t len)
 {
@@ -736,6 +779,7 @@ fail:
 	len = ret ? 0 : len;
 	return len;
 }
+
 #if 0
 static int msm_iommu_map_range(struct iommu_domain *domain, unsigned int va,
 			       struct scatterlist *sg, unsigned int len,
@@ -797,6 +841,60 @@ int msm_iommu_get_scm_call_avail(void)
 	return is_secure;
 }
 
+static int msm_iommu_domain_set_attr(struct iommu_domain *domain,
+				enum iommu_attr attr, void *data)
+{
+	switch (attr) {
+	case DOMAIN_ATTR_SECURE_VMID:
+		/*
+		 * Not supported on MMU-500 driver as we are on preconfigured
+		 * secure context banks where the secure VMID is already set
+		 * from bootloader MMU initialization.
+		 * Also, the TZ in MSM SoC using this driver will not accept
+		 * hypervisor SCM calls which would be needed to change the
+		 * secure VMID mapping in the IOMMU!
+		 *
+		 * Note: This is valid for both secure and non-secure IOMMU.
+		 */
+		break;
+	case DOMAIN_ATTR_ATOMIC:
+		/* 
+		 * Map / unmap in legacy driver are by default atomic. So
+		 * we don't need to do anything here.
+		 */
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int msm_iommu_domain_get_attr(struct iommu_domain *domain,
+				enum iommu_attr attr, void *data)
+{
+	struct msm_iommu_priv *priv = to_msm_priv(domain);
+	struct msm_iommu_ctx_drvdata *ctx_drvdata = NULL;
+
+	if (!list_empty(&priv->list_attached))
+		ctx_drvdata = list_first_entry(&priv->list_attached,
+			struct msm_iommu_ctx_drvdata, attached_elm);
+
+	switch (attr) {
+	case DOMAIN_ATTR_SECURE_VMID:
+		*((int *) data) = -VMID_INVAL;
+		break;
+	case DOMAIN_ATTR_CONTEXT_BANK:
+		if (!ctx_drvdata)
+			return -ENODEV;
+
+		*((unsigned int *) data) = ctx_drvdata->num;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static struct iommu_ops msm_iommu_ops = {
 	.domain_alloc = msm_iommu_domain_alloc,
 	.domain_free = msm_iommu_domain_free,
@@ -805,10 +903,13 @@ static struct iommu_ops msm_iommu_ops = {
 	.map = msm_iommu_map,
 	.unmap = msm_iommu_unmap,
 /*	.map_range = msm_iommu_map_range,*/
-	.map_sg = default_iommu_map_sg,
+	.map_sg = msm_iommu_map_sg, //default_iommu_map_sg,
 /*	.unmap_range = msm_iommu_unmap_range,*/
 	.iova_to_phys = msm_iommu_iova_to_phys,
+	.domain_set_attr = msm_iommu_domain_set_attr,
+	.domain_get_attr = msm_iommu_domain_get_attr,
 	.pgsize_bitmap = MSM_IOMMU_PGSIZES,
+	.dma_supported = msm_iommu_dma_supported,
 };
 
 static int __init msm_iommu_sec_init(void)

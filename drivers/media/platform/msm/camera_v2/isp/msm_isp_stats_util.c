@@ -542,10 +542,10 @@ int msm_isp_release_stats_stream(struct vfe_device *vfe_dev, void *arg)
 		stream_info->buffer_offset[i] = stream_info->buffer_offset[k];
 	}
 
+	stream_info->num_isp--;
 	stream_info->vfe_dev[stream_info->num_isp] = 0;
 	stream_info->stream_handle[stream_info->num_isp] = 0;
 	stream_info->buffer_offset[stream_info->num_isp] = 0;
-	stream_info->num_isp--;
 	stream_info->vfe_mask &= ~(1 << vfe_dev->pdev->id);
 	if (stream_info->num_isp == 0)
 		stream_info->state = STATS_AVAILABLE;
@@ -1256,7 +1256,7 @@ int msm_isp_update_stats_stream(struct vfe_device *vfe_dev, void *arg)
 				&update_cmd->update_info[i];
 		/*check array reference bounds*/
 		if (STATS_IDX(update_info->stream_handle)
-			> vfe_dev->hw_info->stats_hw_info->num_stats_type) {
+			>= vfe_dev->hw_info->stats_hw_info->num_stats_type) {
 			pr_err("%s: stats idx %d out of bound!", __func__,
 			STATS_IDX(update_info->stream_handle));
 			return -EINVAL;
