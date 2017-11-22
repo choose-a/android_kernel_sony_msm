@@ -82,8 +82,10 @@ static const char * const pctl_names[] = {
 
 typedef enum {
 	VCC_SPI = 0,
+#ifdef CONFIG_ARCH_SONY_LOIRE
 	VDD_ANA,
 	VDD_IO,
+#endif
 	FPC_VREG_MAX,
 } fpc_rails_t;
 
