@@ -545,7 +545,7 @@
 		qcom,mdss-default-ot-rd-limit = <32>;
 		qcom,mdss-default-ot-wr-limit = <16>;
 
-		smmu_rot_unsecure: qcom,smmu_rot_unsec_cb {
+		smmu_rot_unsec: qcom,smmu_rot_unsec_cb {
 			compatible = "qcom,smmu_sde_rot_unsec";
 			iommus = <&rot_smmu 0>;
 			gdsc-mdss-supply = <&gdsc_mmagic_mdss>;
@@ -556,7 +556,7 @@
 				"rot_axi_clk";
 		};
 
-		smmu_rot_secure: qcom,smmu_rot_sec_cb {
+		smmu_rot_sec: qcom,smmu_rot_sec_cb {
 			compatible = "qcom,smmu_sde_rot_sec";
 			iommus = <&rot_smmu 1>;
 			gdsc-mdss-supply = <&gdsc_mmagic_mdss>;
