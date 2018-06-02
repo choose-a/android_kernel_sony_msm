@@ -556,7 +556,7 @@
 				"rot_axi_clk";
 		};
 
-		smmu_rot_secure: qcom,smmu_rot_sec_cb {
+		smmu_rot_sec: qcom,smmu_rot_sec_cb {
 			compatible = "qcom,smmu_sde_rot_sec";
 			iommus = <&rot_smmu 1>;
 			gdsc-mdss-supply = <&gdsc_mmagic_mdss>;
