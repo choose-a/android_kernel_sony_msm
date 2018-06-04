@@ -30,7 +30,6 @@
 
 	/* I2C : BLSP3 */
 	i2c_3: i2c@7577000 { /* BLSP1 QUP2 */
-		pinctrl-1 = <&msm_gpio_47_suspend &msm_gpio_48_suspend>;
 		status = "okay";
 		tcs3490@72 {
 			compatible = "ams,tcs3490";
