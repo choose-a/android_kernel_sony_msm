@@ -30,6 +30,7 @@
 
 	/* I2C : BLSP3 */
 	i2c_3: i2c@7577000 { /* BLSP1 QUP2 */
+		pinctrl-0 = <&msm_gpio_47 &msm_gpio_48>;
 		pinctrl-1 = <&msm_gpio_47_suspend &msm_gpio_48_suspend>;
 		status = "okay";
 		tcs3490@72 {
