@@ -18,6 +18,11 @@
  */
 
 &soc {
+	/* I2C : BLSP3 */
+	i2c_3: i2c@7577000 { /* BLSP1 QUP2 */
+		pinctrl-1 = <&i2c_3_active>;
+	}
+
 	/* I2C : BLSP12 */
 	i2c@75ba000 {
 		synaptics_clearpad@2c {
