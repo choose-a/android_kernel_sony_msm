@@ -38,8 +38,8 @@
 			reg = <0x29>;
 			interrupt-parent = <&tlmm>;
 			interrupts = <85 0x0>;
-			vdd-supply = <&pm8994_lvs1>;
-			tof-supply_name = "vdd";
+			tof_avdd-supply = <&pm8994_lvs1>;
+			tof-supply_name = "tof_avdd";
 			pinctrl-names = "tof_irq_active", "tof_irq_suspend";
 			pinctrl-0 = <&msm_gpio_85>;
 			pinctrl-1 = <&msm_gpio_85_suspend>;
